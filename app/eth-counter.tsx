@@ -10,6 +10,14 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { formatEther, Address } from "viem";
 import { useMemo } from "react";
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableHeader,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
 
 const fetchDuneData = async (address: string) => {
   const options = {
@@ -115,12 +123,7 @@ export const EthCounter = ({ address }: { address: Address }) => {
           <AccordionItem value="item-1">
             <AccordionTrigger>Based on</AccordionTrigger>
             <AccordionContent>
-              {sortedTokens.map(token => (
-                <li key={token.chain_id + token.address}>
-                  {parseFloat(formatEther(token.amount)).toFixed(4)}{" "}
-                  {token.symbol} on {token.chain_id}
-                </li>
-              ))}
+              <TokenTable tokens={sortedTokens} />
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -137,4 +140,41 @@ type Token = {
   decimals: number;
   amount: bigint;
   address: string;
+  chain: string;
 };
+
+export const formatCurrency = (amount: number) => {
+  return amount?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
+const TokenTable = ({ tokens }: { tokens: Token[] }) => {
+  console.log("tokens:", tokens);
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>ETH Amount</TableHead>
+          <TableHead>USD value</TableHead>
+          <TableHead>Symbol</TableHead>
+          <TableHead>Chain</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {tokens.map(token => (
+          <TableRow key={token.chain_id + token.address}>
+            <TableCell>
+              {parseFloat(formatEther(token.amount)).toFixed(4)}{" "}
+            </TableCell>
+            <TableCell>
+              {token.value_usd ? formatCurrency(token.value_usd) : "-"}
+            </TableCell>
+            <TableCell>{token.symbol}</TableCell>
+            <TableCell>{token.chain}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
+
+export default TokenTable;
