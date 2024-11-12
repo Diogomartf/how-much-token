@@ -144,17 +144,26 @@ type Token = {
 };
 
 export const formatCurrency = (amount: number) => {
-  return amount?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return "$" + amount?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
 const TokenTable = ({ tokens }: { tokens: Token[] }) => {
-  console.log("tokens:", tokens);
+  const totals = useMemo(() => {
+    return tokens.reduce(
+      (acc, token) => ({
+        ethAmount: acc.ethAmount + parseFloat(formatEther(token.amount)),
+        usdValue: acc.usdValue + (token.value_usd || 0),
+      }),
+      { ethAmount: 0, usdValue: 0 }
+    );
+  }, [tokens]);
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>ETH Amount</TableHead>
-          <TableHead>USD value</TableHead>
+          <TableHead>value ($)</TableHead>
           <TableHead>Symbol</TableHead>
           <TableHead>Chain</TableHead>
         </TableRow>
@@ -163,7 +172,7 @@ const TokenTable = ({ tokens }: { tokens: Token[] }) => {
         {tokens.map(token => (
           <TableRow key={token.chain_id + token.address}>
             <TableCell>
-              {parseFloat(formatEther(token.amount)).toFixed(4)}{" "}
+              {parseFloat(formatEther(token.amount)).toFixed(4)}
             </TableCell>
             <TableCell>
               {token.value_usd ? formatCurrency(token.value_usd) : "-"}
@@ -172,6 +181,10 @@ const TokenTable = ({ tokens }: { tokens: Token[] }) => {
             <TableCell>{token.chain}</TableCell>
           </TableRow>
         ))}
+        <TableRow className="font-bold border-t-2">
+          <TableCell>{totals?.ethAmount.toFixed(4)}</TableCell>
+          <TableCell>{formatCurrency(totals.usdValue)}</TableCell>
+        </TableRow>
       </TableBody>
     </Table>
   );
