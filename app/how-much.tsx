@@ -18,6 +18,11 @@ import { useEnsName } from "wagmi";
 
 const VITALIK_ETH_ADDRESS = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045";
 
+const shortenAddress = (address: string) => {
+  if (address.length <= 8) return address;
+  return `${address.slice(0, 6)}..${address.slice(-6)}`;
+};
+
 export const HowMuch = () => {
   const [address, setAddress] = useState(VITALIK_ETH_ADDRESS);
   const [isOpen, setIsOpen] = useState(false);
@@ -28,11 +33,6 @@ export const HowMuch = () => {
     address: address as Address,
     chainId: 1,
   });
-
-  const shortenAddress = (address: string) => {
-    if (address.length <= 8) return address;
-    return `${address.slice(0, 6)}..${address.slice(-6)}`;
-  };
 
   const displayAddress = useMemo(() => {
     if (isEnsLoading) return "...";
@@ -48,17 +48,16 @@ export const HowMuch = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex w-full max-w-sm items-center space-x-2"></div>
+    <div className="space-y-8  w-full max-w-md mx-auto">
       <div className="space-y-1">
         <h1 className="text-3xl md:text-4xl font-bold">
           How much ETH does{" "}
           <div
-            className="text-teal-600 p-2 bg-teal-50 rounded-lg hover:bg-teal-100 flex justify-center relative cursor-pointer"
+            className="text-teal-600 dark:text-teal-300 p-2 bg-teal-50 dark:bg-teal-800 rounded-lg hover:bg-teal-100 flex justify-center relative cursor-pointer"
             onClick={() => setIsOpen(true)}
           >
             {displayAddress}
-            <div className="absolute -top-1 -right-2 text-xs rotate-12">
+            <div className="absolute -top-1 -right-2 text-xs rotate-12 dark:text-teal-300">
               wallet
             </div>
           </div>

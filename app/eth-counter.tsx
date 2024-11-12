@@ -99,8 +99,8 @@ export const EthCounter = ({ address }: { address: Address }) => {
   if (isLoading)
     return (
       <div className="space-y-5">
-        <div className="p-4 h-16 bg-gray-100 animate-pulse rounded-lg text-sm"></div>
-        <div className="p-4 h-12 bg-gray-100 animate-pulse rounded-lg"></div>
+        <div className="p-4 h-16 bg-stone-100 dark:bg-stone-800 animate-pulse rounded-lg"></div>
+        <div className="p-4 h-12 bg-stone-100 dark:bg-stone-800 animate-pulse rounded-lg"></div>
       </div>
     );
 
@@ -118,16 +118,14 @@ export const EthCounter = ({ address }: { address: Address }) => {
           {totalEth}
         </p>
       </div>
-      <ol className="list-inside list-decimal text-sm font-[family-name:var(--font-geist-mono)] space-y-2">
-        <Accordion type="single" collapsible>
-          <AccordionItem value="item-1">
-            <AccordionTrigger>Based on</AccordionTrigger>
-            <AccordionContent>
-              <TokenTable tokens={sortedTokens} />
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </ol>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="item-1">
+          <AccordionTrigger>Based on</AccordionTrigger>
+          <AccordionContent>
+            <TokenTable tokens={sortedTokens} />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </>
   );
 };
@@ -162,7 +160,7 @@ const TokenTable = ({ tokens }: { tokens: Token[] }) => {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>ETH Amount</TableHead>
+          <TableHead>ETH</TableHead>
           <TableHead>value ($)</TableHead>
           <TableHead>Symbol</TableHead>
           <TableHead>Chain</TableHead>
