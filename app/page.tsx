@@ -35,9 +35,9 @@ export default function Home() {
         </a>
       </footer>
       <p className="text-xs mx-auto row-start-5 text-center">
-        *The amount is just an approximation. Dune Echo doesn't support all
+        *The amount is just an approximation. Dune Echo doesn&apos;t support all
         networks nor all usd values. Also calculations might have some errors.
-        <br />* Currently we're accounting liquid staking as ETH.
+        <br />* Currently we&apos;re accounting liquid staking as ETH.
       </p>
     </div>
   );

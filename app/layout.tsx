@@ -35,8 +35,10 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           enableSystem
-          defaultTheme="dark"
+          defaultTheme="system"
           disableTransitionOnChange
+          storageKey="theme-preference"
+          enableColorScheme
         >
           <Providers>{children}</Providers>
         </ThemeProvider>
