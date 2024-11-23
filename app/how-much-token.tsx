@@ -15,17 +15,30 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useEnsName } from "wagmi";
+import { Combobox } from "@/components/combobox";
 
 const VITALIK_ETH_ADDRESS = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045";
 
 const shortenAddress = (address: string) => {
   if (address.length <= 8) return address;
-  return `${address.slice(0, 6)}..${address.slice(-6)}`;
+  return `${address.slice(0, 4)}..${address.slice(-4)}`;
 };
 
-export const HowMuch = () => {
+const selectTokens = [
+  {
+    value: "eth",
+    label: "ETH",
+  },
+  {
+    value: "wbtc",
+    label: "WBTC",
+  },
+];
+
+export const HowMuchToken = () => {
   const [address, setAddress] = useState(VITALIK_ETH_ADDRESS);
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedToken, setSelectedToken] = useState(selectTokens[0].value);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -50,8 +63,16 @@ export const HowMuch = () => {
   return (
     <div className="space-y-8  w-full max-w-md mx-auto">
       <div className="space-y-1">
-        <h1 className="text-3xl md:text-4xl font-bold">
-          How much ETH does{" "}
+        <h1 className="justify-center flex flex-wrap gap-2 items-center text-3xl md:text-4xl font-bold">
+          How much{" "}
+          <div>
+            <Combobox
+              tokens={selectTokens}
+              setValue={setSelectedToken}
+              value={selectedToken}
+            />
+          </div>{" "}
+          does{" "}
           <div
             className="text-teal-600 dark:text-teal-300 p-2 bg-teal-50 dark:bg-teal-800 rounded-lg hover:bg-teal-100 flex justify-center relative cursor-pointer"
             onClick={() => setIsOpen(true)}
@@ -64,11 +85,8 @@ export const HowMuch = () => {
           hold?
         </h1>
       </div>
-      <EthCounter address={address as Address} />
+      <EthCounter address={address as Address} tokenSymbol={selectedToken} />
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
-        <div className="flex justify-center">
-          <Button onClick={() => setIsOpen(true)}>change address</Button>
-        </div>
         <DrawerContent className="max-w-3xl mx-auto">
           <DrawerHeader>
             <DrawerTitle>Change address</DrawerTitle>

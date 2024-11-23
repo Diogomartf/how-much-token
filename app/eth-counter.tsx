@@ -6,7 +6,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { formatEther, Address } from "viem";
 import { useMemo } from "react";
@@ -18,6 +17,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
 
 const fetchDuneData = async (address: string) => {
   const options = {
@@ -32,27 +32,52 @@ const fetchDuneData = async (address: string) => {
   return await response.json();
 };
 
-function filterEthTokens(tokens: Token[]) {
+function filterTokensBySymbol(tokens: Token[], symbol = "eth") {
   return tokens.filter(
-    token => token.symbol && token.symbol.toLowerCase().includes("eth")
+    token => token.symbol && token.symbol.toLowerCase().includes(symbol)
   );
 }
 
-function filterOutDustTokens(tokens: Token[], dustThreshold: number = 0.0001) {
+const GNOSIS_CHAIN_ID = 100;
+
+function priceLooksCorrect(token: Token, tokenSymbol: string) {
+  if (token.chain_id === GNOSIS_CHAIN_ID) return true;
+
+  if (!token.price_usd) return null;
+
+  if (tokenSymbol.toLowerCase() === "wbtc") return token.price_usd > 50000;
+
+  return token.price_usd > 2000;
+}
+
+function filterCorrectPricing(tokens: Token[], tokenSymbol: string) {
   return tokens.filter(token => {
-    const amount = parseFloat(formatEther(token.amount));
-    const isNotDust = amount > dustThreshold;
+    return priceLooksCorrect(token, tokenSymbol);
+  });
+}
+
+function calculateTokenAmount(amount: bigint, decimals: number): number {
+  const amountBigInt = BigInt(amount);
+  const divisor = BigInt(10 ** decimals);
+
+  const wholePart = amountBigInt / divisor;
+  const remainder = amountBigInt % divisor;
+
+  const decimalPart = Number(remainder) / Number(divisor);
+  return Number(wholePart) + decimalPart;
+}
+
+function filterOutDustTokens(tokens: Token[], symbol: string = "eth") {
+  return tokens.filter(token => {
+    const dustThreshold = symbol.toLowerCase() === "wbc" ? 0.0000001 : 0.0001;
+    const amount = calculateTokenAmount(token.amount, token.decimals);
+    const isAmountNotDust = amount > dustThreshold;
     const isHoldingsBiggerThanOneDollar = token.value_usd > 1;
-    const isNotFakeETH = token.price_usd > 1000;
-    const isSymbolETHorWETH =
-      token.symbol.toUpperCase() === "WETH" ||
-      token.symbol.toUpperCase() === "ETH";
-    const isChainGnosis = token.chain_id === 100;
+    const isChainGnosis = token.chain_id === GNOSIS_CHAIN_ID;
 
-    if (token.price_usd)
-      return isNotDust && isHoldingsBiggerThanOneDollar && isNotFakeETH;
+    if (isChainGnosis) return true;
 
-    return isChainGnosis && isSymbolETHorWETH;
+    return isAmountNotDust && isHoldingsBiggerThanOneDollar;
   });
 }
 
@@ -60,17 +85,24 @@ function sortTokensByValueUsd(tokens: Token[]) {
   return tokens.sort((a, b) => b.value_usd - a.value_usd);
 }
 
-function calcTotalEth(tokens: Token[]) {
+function calcTotalAmount(tokens: Token[]) {
   return tokens
     .reduce((total, token) => {
-      return total + parseFloat(formatEther(token.amount));
+      return total + calculateTokenAmount(token.amount, token.decimals);
     }, 0)
     .toFixed(4);
 }
 
-export const EthCounter = ({ address }: { address: Address }) => {
+export const EthCounter = ({
+  address,
+  tokenSymbol,
+}: {
+  address: Address;
+  tokenSymbol: string;
+}) => {
   const { data, isLoading } = useQuery(
     ["dune-data", address],
+
     () => fetchDuneData(address),
     {
       enabled: !!address,
@@ -79,22 +111,25 @@ export const EthCounter = ({ address }: { address: Address }) => {
     }
   );
 
-  const { sortedTokens, totalEth } = useMemo(() => {
+  const { sortedTokens, totalAmount } = useMemo(() => {
     if (!data?.balances) {
       return {
-        ethTokens: [],
-        filteredTokens: [],
         sortedTokens: [],
-        totalEth: "0.0000",
+        totalAmount: "0.0000",
       };
     }
-    const ethTokens = filterEthTokens(data.balances);
-    const filteredTokens = filterOutDustTokens(ethTokens);
-    const sortedTokens = sortTokensByValueUsd(filteredTokens);
-    const totalEth = calcTotalEth(filteredTokens);
 
-    return { ethTokens, filteredTokens, sortedTokens, totalEth };
-  }, [data?.balances]);
+    const tokens = filterTokensBySymbol(data.balances, tokenSymbol);
+    const filterOutDustTokenz = filterOutDustTokens(tokens, tokenSymbol);
+    const filterPricing = filterCorrectPricing(
+      filterOutDustTokenz,
+      tokenSymbol
+    );
+    const sortedTokens = sortTokensByValueUsd(filterPricing);
+    const totalAmount = calcTotalAmount(filterPricing);
+
+    return { sortedTokens, totalAmount };
+  }, [data?.balances, tokenSymbol]);
 
   if (isLoading)
     return (
@@ -115,7 +150,7 @@ export const EthCounter = ({ address }: { address: Address }) => {
           className="w-fit h-8"
         />
         <p className="text-4xl font-[family-name:var(--font-geist-mono)]">
-          {totalEth}
+          {totalAmount}
         </p>
       </div>
       <Accordion type="single" collapsible>
@@ -149,18 +184,24 @@ const TokenTable = ({ tokens }: { tokens: Token[] }) => {
   const totals = useMemo(() => {
     return tokens.reduce(
       (acc, token) => ({
-        ethAmount: acc.ethAmount + parseFloat(formatEther(token.amount)),
+        amount: acc.amount + parseFloat(formatEther(token.amount)),
         usdValue: acc.usdValue + (token.value_usd || 0),
       }),
-      { ethAmount: 0, usdValue: 0 }
+      { amount: 0, usdValue: 0 }
     );
   }, [tokens]);
+
+  const formatAmount = (amount: bigint) => {
+    const parsedAmount = parseFloat(formatEther(amount)).toFixed(5);
+
+    return Number(parsedAmount) < 0.0001 ? "<0.00001" : parsedAmount;
+  };
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>ETH</TableHead>
+          <TableHead>Amount</TableHead>
           <TableHead>value ($)</TableHead>
           <TableHead>Symbol</TableHead>
           <TableHead>Chain</TableHead>
@@ -169,9 +210,7 @@ const TokenTable = ({ tokens }: { tokens: Token[] }) => {
       <TableBody>
         {tokens.map(token => (
           <TableRow key={token.chain_id + token.address}>
-            <TableCell>
-              {parseFloat(formatEther(token.amount)).toFixed(4)}
-            </TableCell>
+            <TableCell>{formatAmount(token.amount)}</TableCell>
             <TableCell>
               {token.value_usd ? formatCurrency(token.value_usd) : "-"}
             </TableCell>
@@ -180,7 +219,7 @@ const TokenTable = ({ tokens }: { tokens: Token[] }) => {
           </TableRow>
         ))}
         <TableRow className="font-bold border-t-2">
-          <TableCell>{totals?.ethAmount.toFixed(4)}</TableCell>
+          <TableCell>{totals?.amount.toFixed(4)}</TableCell>
           <TableCell>{formatCurrency(totals.usdValue)}</TableCell>
         </TableRow>
       </TableBody>
