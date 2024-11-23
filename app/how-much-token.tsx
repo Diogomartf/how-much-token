@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useMemo } from "react";
-import { EthCounter } from "@/app/eth-counter";
+import { TokenCounter } from "@/app/token-counter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Address } from "viem";
@@ -48,7 +48,7 @@ export const HowMuchToken = () => {
   });
 
   const displayAddress = useMemo(() => {
-    if (isEnsLoading) return "...";
+    if (isEnsLoading) return ". . .";
     if (ensName) return ensName;
     return shortenAddress(address);
   }, [address, ensName, isEnsLoading]);
@@ -74,7 +74,7 @@ export const HowMuchToken = () => {
           </div>{" "}
           does{" "}
           <div
-            className="text-teal-600 dark:text-teal-300 p-2 bg-teal-50 dark:bg-teal-800 rounded-lg hover:bg-teal-100 flex justify-center relative cursor-pointer"
+            className="text-teal-600 dark:text-teal-300 p-3 bg-teal-50 dark:bg-teal-800 rounded-lg hover:bg-teal-100 flex justify-center relative cursor-pointer min-w-32"
             onClick={() => setIsOpen(true)}
           >
             {displayAddress}
@@ -85,7 +85,7 @@ export const HowMuchToken = () => {
           hold?
         </h1>
       </div>
-      <EthCounter address={address as Address} tokenSymbol={selectedToken} />
+      <TokenCounter address={address as Address} tokenSymbol={selectedToken} />
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerContent className="max-w-3xl mx-auto">
           <DrawerHeader>

@@ -34,7 +34,7 @@ export function Combobox({
       <PopoverTrigger asChild>
         <button
           aria-expanded={open}
-          className="p-4 bg-yellow-50 dark:bg-yellow-400 flex items-center rounded-lg hover:bg-yellow-100 relative dark:text-yellow-800"
+          className="p-3 bg-yellow-50 dark:bg-yellow-400 flex items-center rounded-lg hover:bg-yellow-100 relative dark:text-yellow-800"
         >
           {value ? tokens.find(token => token.value === value)?.label : "Token"}
           <ChevronsUpDown className="opacity-50" />

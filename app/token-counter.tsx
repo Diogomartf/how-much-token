@@ -93,7 +93,7 @@ function calcTotalAmount(tokens: Token[]) {
     .toFixed(4);
 }
 
-export const EthCounter = ({
+export const TokenCounter = ({
   address,
   tokenSymbol,
 }: {
@@ -130,6 +130,7 @@ export const EthCounter = ({
 
     return { sortedTokens, totalAmount };
   }, [data?.balances, tokenSymbol]);
+  console.log("tokenSymbol:", tokenSymbol);
 
   if (isLoading)
     return (
@@ -142,13 +143,15 @@ export const EthCounter = ({
   return (
     <>
       <div className="flex items-center justify-center space-x-2">
-        <Image
-          src="/eth-logo.svg"
-          alt="ETH logo"
-          width={373}
-          height={612}
-          className="w-fit h-8"
-        />
+        {tokenSymbol && (
+          <Image
+            src={`/${tokenSymbol}-logo.svg`}
+            alt={`${tokenSymbol} logo`}
+            width={373}
+            height={612}
+            className="w-fit h-8"
+          />
+        )}
         <p className="text-4xl font-[family-name:var(--font-geist-mono)]">
           {totalAmount}
         </p>
